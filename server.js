@@ -16,8 +16,22 @@ connectDB();
 
 const app = express();
 
+// Konfigurasi CORS
+const allowedOrigins = ['http://localhost:3000', 'http://curious-framing-442217-n0.et.r.appspot.com/']; // Daftar origin yang diizinkan
+
+const corsOptions = {
+  origin: (origin, callback) => {
+    if (allowedOrigins.indexOf(origin) !== -1 || !origin) { // Cek apakah origin ada di daftar, atau jika request dari server itu sendiri (!origin)
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  optionsSuccessStatus: 200,
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions)); // Terapkan CORS dengan konfigurasi
 app.use(bodyParser.json());
 app.use(express.json());
 
@@ -41,7 +55,7 @@ app.use('/recipes', (req, res, next) => {
   return authMiddleware(req, res, next);
 }, recipeRoutes);
 
-app.use('/favorites', favoriteRoutes);
+app.use('/favorites', authMiddleware, favoriteRoutes);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
